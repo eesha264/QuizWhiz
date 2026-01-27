@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/firebase';
-import { isAdminEmail } from '@/lib/auth';
+import { isAdminEmail, registerAdmin } from '@/lib/auth';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,11 +51,9 @@ export default function LoginPage() {
         const isAdmin = await isAdminEmail(emailToCheck);
 
         if (!isAdmin) {
-          console.warn(`⛔ User ${emailToCheck} is not in admins collection. Signing out.`);
-          await auth.signOut();
-          setError(`Access denied. The email '${emailToCheck}' is not authorized. Please contact an administrator to have your email added to the allowlist.`);
-          setLoading(false);
-          return;
+          console.log(`ℹ️ User ${emailToCheck} not in admins collection. Auto-registering...`);
+          await registerAdmin(emailToCheck);
+          // Allow to proceed automatically
         }
 
         console.log('✅ Admin verification passed. Redirecting...');
@@ -92,11 +90,9 @@ export default function LoginPage() {
         const isAdmin = await isAdminEmail(emailToCheck);
 
         if (!isAdmin) {
-          console.warn(`⛔ User ${emailToCheck} is not in admins collection. Signing out.`);
-          await auth.signOut();
-          setError(`Access denied. The email '${emailToCheck}' is not authorized. Please contact an administrator to have your email added to the allowlist.`);
-          setLoading(false);
-          return;
+          console.log(`ℹ️ User ${emailToCheck} not in admins collection. Auto-registering...`);
+          await registerAdmin(emailToCheck);
+          // Allow to proceed automatically
         }
 
         console.log('✅ Admin verification passed. Redirecting...');
