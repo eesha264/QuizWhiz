@@ -7,6 +7,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFunctions, Functions } from 'firebase/functions';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -67,6 +68,7 @@ if (typeof window !== 'undefined') {
 // These are safe to use across the entire app
 export const db: Firestore = firebaseConfig.apiKey ? getFirestore(app) : ({} as Firestore);
 export const auth: Auth = firebaseConfig.apiKey ? getAuth(app) : ({} as Auth);
+export const functions: Functions = firebaseConfig.apiKey ? getFunctions(app, 'us-central1') : ({} as Functions);
 
 // Export app for advanced use cases
 export { app };

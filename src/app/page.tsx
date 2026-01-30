@@ -1,311 +1,292 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, Settings, Smartphone, Trophy, Zap, BookOpen, Film, Globe, Monitor, Sparkles, Brain, History as HistoryIcon, Gamepad2, Plane, Atom } from 'lucide-react';
-import { createQuickGame, createAIQuickQuiz } from '@/lib/firebase-service';
-import { TRIVIA_CATEGORIES } from '@/lib/trivia-service';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import clsx from 'clsx';
+import { useInView } from 'react-intersection-observer';
+import { Zap, Users, Brain, Sparkles, ArrowRight, Trophy, Timer, Gamepad2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import MobileNav from '@/components/mobile-nav';
 
-// Visual Assets Mapping with Curated Unsplash Images
-const THEMES: Record<number, { bgImage: string; bleedingText: string; bleedingClass: string; aspect: string }> = {
-  [TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE]: {
-    bgImage: "https://images.unsplash.com/photo-1620121692029-d088224ddc74?q=80&w=1000&auto=format&fit=crop", // Abstract Neon/Brain vibe
-    bleedingText: "TRIVIA",
-    bleedingClass: "absolute -top-4 -left-8 text-8xl font-black text-white/5 uppercase rotate-90 origin-bottom-left whitespace-nowrap select-none",
-    aspect: "aspect-[3/4]"
-  },
-  [TRIVIA_CATEGORIES.MOVIES]: {
-    bgImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000&auto=format&fit=crop", // Cinema/Movie Theater
-    bleedingText: "CINEMA",
-    bleedingClass: "absolute -right-8 top-10 text-8xl font-black text-white/10 uppercase tracking-tighter leading-none select-none writing-vertical-rl",
-    aspect: "aspect-[3/4]"
-  },
-  [TRIVIA_CATEGORIES.SPORTS]: {
-    bgImage: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop", // Dark Stadium/Action
-    bleedingText: "SPORT",
-    bleedingClass: "absolute top-0 right-0 text-7xl font-black text-white/5 uppercase rotate-180 writing-mode-vertical origin-top-right whitespace-nowrap select-none",
-    aspect: "aspect-square"
-  },
-  [TRIVIA_CATEGORIES.GEOGRAPHY]: {
-    bgImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop", // Earth from space/Global
-    bleedingText: "WORLD",
-    bleedingClass: "absolute -bottom-12 -left-4 text-8xl font-black text-white/5 uppercase select-none",
-    aspect: "aspect-[3/4]"
-  },
-  [TRIVIA_CATEGORIES.VIDEO_GAMES]: {
-    bgImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop", // Retro Arcade/Neon
-    bleedingText: "8-BIT",
-    bleedingClass: "absolute -bottom-4 -right-4 text-8xl font-black text-white/5 uppercase select-none",
-    aspect: "aspect-[4/5]"
-  },
-  [TRIVIA_CATEGORIES.HISTORY]: {
-    bgImage: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1000&auto=format&fit=crop", // Old Technology/Camera/History
-    bleedingText: "HISTORY",
-    bleedingClass: "absolute top-0 -right-8 text-7xl font-black text-white/5 uppercase rotate-90 origin-top-right whitespace-nowrap select-none",
-    aspect: "aspect-[3/4]"
-  },
-  [TRIVIA_CATEGORIES.SCIENCE_NATURE]: {
-    bgImage: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000&auto=format&fit=crop", // Lab/DNA/Science
-    bleedingText: "SCIENCE",
-    bleedingClass: "absolute -top-4 -left-4 text-8xl font-black text-white/5 uppercase select-none",
-    aspect: "aspect-[3/4]"
-  }
-};
-
-// Data Source - Cleaned up to match user request and removed levels
-const TOPICS = [
-  { id: TRIVIA_CATEGORIES.GENERAL_KNOWLEDGE, name: 'General Knowledge', icon: Brain },
-  { id: TRIVIA_CATEGORIES.MOVIES, name: 'Movies', icon: Film },
-  { id: TRIVIA_CATEGORIES.SPORTS, name: 'Sports', icon: Trophy },
-  { id: TRIVIA_CATEGORIES.GEOGRAPHY, name: 'Geography', icon: Globe },
-  { id: TRIVIA_CATEGORIES.VIDEO_GAMES, name: 'Video Games', icon: Gamepad2 },
-  { id: TRIVIA_CATEGORIES.HISTORY, name: 'History', icon: HistoryIcon },
-  { id: TRIVIA_CATEGORIES.SCIENCE_NATURE, name: 'Science', icon: Atom },
-];
-
-export default function HomePage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState<number | string | null>(null);
-  const [isCustomOpen, setIsCustomOpen] = useState(false);
-  const [customTopic, setCustomTopic] = useState('');
-
-  const handleTopicClick = async (categoryId: number, topicName: string) => {
-    if (loading) return;
-    setLoading(categoryId);
-    try {
-      const quizId = await createQuickGame(topicName, 'medium');
-      router.push(`/play/${quizId}`);
-    } catch (error) {
-      console.error('Error starting game:', error);
-      alert('Failed to start game.');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleCustomGenerate = async () => {
-    if (!customTopic.trim() || loading) return;
-    setLoading('custom');
-    try {
-      const quizId = await createAIQuickQuiz(customTopic);
-      setIsCustomOpen(false);
-      router.push(`/play/${quizId}`);
-    } catch (error) {
-      console.error('Error generating quiz:', error);
-      alert('Failed to generate quiz.');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  // Split Logic
-  const leftColumnIndices = [0, 2, 4, 6];
-  const rightColumnIndices = [1, 3, 5];
+// Scroll-triggered animation component
+function AnimatedSection({
+  children,
+  className = '',
+  delay = 0
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const { ref, inView } = useInView({ threshold: 0.2, triggerOnce: true });
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-[#ccff00] selection:text-black">
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ${className}`}
+      style={{
+        transitionDelay: `${delay}ms`,
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateY(0)' : 'translateY(40px)'
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
-      {/* Background Texture*/}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-0">
-        <span className="material-symbols-outlined text-[600px] text-white opacity-[0.03] -rotate-[15deg] select-none translate-x-12 translate-y-20 transform">bolt</span>
-        <Zap strokeWidth={1} className="w-[600px] h-[600px] text-white opacity-[0.03] -rotate-[15deg] absolute translate-x-12 translate-y-20" />
-      </div>
+export default function LandingPage() {
+  const router = useRouter();
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
 
-      <div className="relative z-10 flex flex-col min-h-[100dvh] pb-24 w-full max-w-md mx-auto border-x border-white/5 bg-[#050505]">
+  // Parallax scroll tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-        {/* Mobile Navigation Bar */}
-        <MobileNav />
+  const features = [
+    {
+      icon: Brain,
+      title: 'AI-Powered',
+      description: 'Generate quizzes on any topic using advanced AI'
+    },
+    {
+      icon: Users,
+      title: 'Real-Time',
+      description: 'Compete with friends in live multiplayer sessions'
+    },
+    {
+      icon: Trophy,
+      title: 'Leaderboards',
+      description: 'Track scores and crown the ultimate champion'
+    }
+  ];
 
-        {/* Header */}
-        <header className="flex items-center justify-between p-6 pb-2 bg-gradient-to-b from-[#050505] to-transparent sticky top-0 z-50 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="bg-[#ccff00] text-black p-1.5 rounded-none border border-black shadow-[0_0_10px_rgba(204,255,0,0.3)]">
-              <Brain className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[#ccff00]/60 font-mono tracking-[0.2em] leading-none uppercase">Uplink_Stable</span>
-              <span className="text-white text-xs font-black tracking-tight leading-none mt-1 uppercase font-mono">Guest Operator</span>
-            </div>
+  const steps = [
+    { num: '01', title: 'Create', desc: 'Pick a topic or let AI generate one' },
+    { num: '02', title: 'Share', desc: 'Invite players with a simple code' },
+    { num: '03', title: 'Play', desc: 'Answer fast to climb the leaderboard' }
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden selection:bg-[#ccff00] selection:text-black">
+
+      {/* Noise texture overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none z-50 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+        }}
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          HERO SECTION - Parallax
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
+      >
+        {/* Parallax background elements */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+        >
+          {/* Floating orbs */}
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-[#ccff00]/20 to-transparent blur-3xl" />
+          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 rounded-full bg-gradient-to-br from-purple-500/10 to-transparent blur-3xl" />
+        </div>
+
+        {/* Grid lines */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #ccff00 1px, transparent 1px),
+              linear-gradient(to bottom, #ccff00 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px',
+            transform: `translateY(${scrollY * 0.1}px)`
+          }}
+        />
+
+        {/* Hero content */}
+        <div className="relative z-10 text-center max-w-4xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-[#ccff00]/10 border border-[#ccff00]/30 px-4 py-2 mb-8">
+            <Zap className="w-4 h-4 text-[#ccff00]" />
+            <span className="text-xs font-mono uppercase tracking-widest text-[#ccff00]">Real-Time Quiz Platform</span>
           </div>
-          <div className="flex items-center justify-end gap-2 bg-black/50 px-3 py-1.5 border border-[#ccff00]/20 rounded-none backdrop-blur-md shadow-[inset_0_0_15px_rgba(204,255,0,0.05)]">
-            <span className="block w-1.5 h-1.5 bg-[#ccff00] animate-pulse"></span>
-            <p className="text-[#ccff00] text-[10px] font-mono font-bold tracking-[0.3em] uppercase">System Online</p>
-          </div>
-        </header>
 
-        {/* Headline */}
-        <section className="px-6 py-6">
-          <h1 className="text-white text-5xl font-black leading-[0.85] tracking-tighter uppercase font-display">
-            Select<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-yellow-400 opacity-90">Cartridge</span>
+          {/* Main headline */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
+            <span className="block text-white">Challenge</span>
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#ccff00] to-yellow-400">Your Brain</span>
           </h1>
-          <div className="h-1 w-24 bg-[#ccff00] mt-4"></div>
-        </section>
 
-        {/* Grid */}
-        <div className="flex px-4 gap-4 items-start">
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-light">
+            Create AI-powered quizzes, compete in real-time, and prove you're the smartest in the room.
+          </p>
 
-          {/* Left Column */}
-          <div className="flex flex-col gap-6 w-1/2">
-            {leftColumnIndices.map((index) => {
-              const topic = TOPICS[index];
-              const theme = THEMES[topic.id];
-              return (
-                <div
-                  key={topic.id}
-                  onClick={() => handleTopicClick(topic.id, topic.name)}
-                  className={clsx(
-                    "group relative w-full bg-[#111] border-4 border-[#ccff00] flex flex-col justify-end overflow-hidden transition-transform active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(204,255,0,0.1)] hover:shadow-[0_0_30px_rgba(204,255,0,0.2)]",
-                    theme.aspect
-                  )}>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-500"
-                    style={{ backgroundImage: `url('${theme.bgImage}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-
-                  {theme.bleedingText && (
-                    <span
-                      className={theme.bleedingClass}
-                      style={theme.bleedingClass.includes('writing-vertical-rl') ? { writingMode: 'vertical-rl' } : {}}
-                    >
-                      {theme.bleedingText}
-                    </span>
-                  )}
-
-                  <div className="relative z-10 p-3 border-t-2 border-[#ccff00]/50 bg-black/80 backdrop-blur-md flex justify-between items-end">
-                    <div>
-                      <h3 className="text-white text-lg font-bold leading-none tracking-tight uppercase font-display">
-                        {topic.name}
-                      </h3>
-                    </div>
-                    {/* Replaced 'Level' with Icon */}
-                    <topic.icon className="w-5 h-5 text-[#ccff00]" />
-                  </div>
-
-                  {loading === topic.id && (
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
-                      <div className="w-8 h-8 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Right Column */}
-          <div className="flex flex-col gap-6 w-1/2 mt-12">
-            {rightColumnIndices.map((index) => {
-              const topic = TOPICS[index];
-              const theme = THEMES[topic.id];
-              return (
-                <div
-                  key={topic.id}
-                  onClick={() => handleTopicClick(topic.id, topic.name)}
-                  className={clsx(
-                    "group relative w-full bg-[#111] border-4 border-[#ccff00] flex flex-col justify-end overflow-hidden transition-transform active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(204,255,0,0.1)] hover:shadow-[0_0_30px_rgba(204,255,0,0.2)]",
-                    theme.aspect
-                  )}>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-500"
-                    style={{ backgroundImage: `url('${theme.bgImage}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-
-                  {theme.bleedingText && (
-                    <span
-                      className={theme.bleedingClass}
-                      style={theme.bleedingClass.includes('writing-vertical-rl') ? { writingMode: 'vertical-rl' } : {}}
-                    >
-                      {theme.bleedingText}
-                    </span>
-                  )}
-
-                  <div className="relative z-10 p-3 border-t-2 border-[#ccff00]/50 bg-black/80 backdrop-blur-md flex justify-between items-end">
-                    <div>
-                      <h3 className="text-white text-lg font-bold leading-none tracking-tight uppercase font-display">
-                        {topic.name}
-                      </h3>
-                    </div>
-                    {/* Replaced 'Level' with Icon */}
-                    <topic.icon className="w-5 h-5 text-[#ccff00]" />
-                  </div>
-
-                  {loading === topic.id && (
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
-                      <div className="w-8 h-8 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {/* Special */}
-            <div
-              onClick={() => setIsCustomOpen(true)}
-              className="group relative w-full bg-[#ccff00] border-4 border-[#ccff00] flex flex-col justify-center items-center p-4 overflow-hidden transition-transform active:scale-95 cursor-pointer aspect-square shadow-[0_0_20px_rgba(204,255,0,0.4)]"
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={() => router.push('/play')}
+              className="h-14 px-8 bg-[#ccff00] hover:bg-[#bbee00] text-black font-black uppercase tracking-widest text-sm group"
             >
-              <Sparkles className="text-black w-10 h-10 mb-2 animate-pulse" />
-              <h3 className="text-black text-lg font-black leading-none tracking-tight uppercase text-center font-display">
-                CUSTOM<br />LOOT
-              </h3>
-            </div>
+              Play Now
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/host/create')}
+              className="h-14 px-8 border-2 border-white/20 hover:border-[#ccff00] hover:text-[#ccff00] font-bold uppercase tracking-widest text-sm bg-transparent"
+            >
+              Create Quiz
+            </Button>
           </div>
         </div>
 
-        {/* Replaced Mobile Navigation Bar */}
-        <MobileNav />
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500">Scroll</span>
+          <div className="w-px h-8 bg-gradient-to-b from-[#ccff00] to-transparent" />
+        </div>
+      </section>
 
-        <Dialog open={isCustomOpen} onOpenChange={setIsCustomOpen}>
-          <DialogContent className="sm:max-w-md bg-[#111] border-2 border-[#ccff00] text-white">
-            <DialogHeader>
-              <DialogTitle className="text-[#ccff00] font-display uppercase tracking-wide">Custom Cartridge</DialogTitle>
-              <DialogDescription className="text-gray-400">
-                Insert a topic to generate a unique level.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="topic" className="text-white font-mono uppercase text-xs tracking-wider">Topic Name</Label>
-                <Input
-                  id="topic"
-                  placeholder="E.G. SYNTHWAVE"
-                  value={customTopic}
-                  onChange={(e) => setCustomTopic(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCustomGenerate()}
-                  autoFocus
-                  className="bg-black border-[#333] focus:border-[#ccff00] text-white placeholder:text-gray-700 font-display font-bold uppercase tracking-wide h-12 rounded-none border-x-0 border-t-0 border-b-2 focus:ring-0"
-                />
-              </div>
+      {/* ══════════════════════════════════════════════════════════════════════════
+          FEATURES SECTION
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 px-6 relative">
+        <div className="max-w-6xl mx-auto">
+          <AnimatedSection className="text-center mb-16">
+            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">Why QuizWhiz</span>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+              Next-Gen Trivia
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+              <AnimatedSection key={feature.title} delay={i * 150}>
+                <div className="group p-8 bg-[#0a0a0a] border border-[#222] hover:border-[#ccff00]/50 transition-all duration-300">
+                  <div className="w-14 h-14 bg-[#ccff00]/10 flex items-center justify-center mb-6 group-hover:bg-[#ccff00]/20 transition-colors">
+                    <feature.icon className="w-7 h-7 text-[#ccff00]" />
+                  </div>
+                  <h3 className="text-xl font-bold uppercase tracking-wide mb-3">{feature.title}</h3>
+                  <p className="text-gray-500 leading-relaxed">{feature.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          HOW IT WORKS
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 px-6 bg-[#0a0a0a] relative overflow-hidden">
+        {/* Parallax accent */}
+        <div
+          className="absolute -right-32 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#ccff00]/5 to-transparent blur-3xl pointer-events-none"
+          style={{ transform: `translateY(${(scrollY - 800) * 0.2}px)` }}
+        />
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          <AnimatedSection className="text-center mb-16">
+            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">How It Works</span>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+              Three Simple Steps
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {steps.map((step, i) => (
+              <AnimatedSection key={step.num} delay={i * 150}>
+                <div className="relative p-8 border-l-4 border-[#ccff00]">
+                  <span className="text-6xl font-black text-[#ccff00]/10 absolute -top-4 -left-2">{step.num}</span>
+                  <h3 className="text-2xl font-bold uppercase tracking-wide mb-3 relative z-10">{step.title}</h3>
+                  <p className="text-gray-500 relative z-10">{step.desc}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          CATEGORIES PREVIEW
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 px-6 relative">
+        <div className="max-w-6xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <span className="text-xs font-mono uppercase tracking-[0.3em] text-[#ccff00] mb-4 block">Categories</span>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter">
+              Endless Topics
+            </h2>
+          </AnimatedSection>
+
+          <AnimatedSection delay={200}>
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              {['General Knowledge', 'Movies', 'Sports', 'Geography', 'Video Games', 'History', 'Science'].map((cat) => (
+                <div
+                  key={cat}
+                  className="flex-shrink-0 px-6 py-4 bg-[#111] border border-[#333] hover:border-[#ccff00] transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-bold uppercase tracking-wider whitespace-nowrap">{cat}</span>
+                </div>
+              ))}
             </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsCustomOpen(false)} className="text-gray-500 hover:text-white hover:bg-transparent uppercase font-mono text-xs">Cancel</Button>
-              <Button
-                onClick={handleCustomGenerate}
-                disabled={!customTopic.trim() || loading === 'custom'}
-                className="bg-[#ccff00] text-black hover:bg-[#bbee00] font-black uppercase tracking-widest rounded-none h-12"
-              >
-                {loading === 'custom' ? 'LOADING...' : 'START GAME'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </AnimatedSection>
+        </div>
+      </section>
 
-      </div>
+      {/* ══════════════════════════════════════════════════════════════════════════
+          FINAL CTA
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 px-6 relative overflow-hidden">
+        {/* Glow effect */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] rounded-full bg-[#ccff00]/10 blur-[150px]" />
+        </div>
+
+        <AnimatedSection className="relative z-10 text-center max-w-3xl mx-auto">
+          <Gamepad2 className="w-16 h-16 text-[#ccff00] mx-auto mb-8" />
+          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6">
+            Ready to Play?
+          </h2>
+          <p className="text-lg text-gray-400 mb-10">
+            Join thousands of players challenging their knowledge every day.
+          </p>
+          <Button
+            onClick={() => router.push('/play')}
+            className="h-16 px-12 bg-[#ccff00] hover:bg-[#bbee00] text-black font-black uppercase tracking-widest text-base group shadow-[0_0_60px_rgba(204,255,0,0.3)]"
+          >
+            Start Playing
+            <Zap className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
+          </Button>
+        </AnimatedSection>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-[#222]">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <span className="text-sm text-gray-600 font-mono">© 2025 QUIZWHIZ</span>
+          <div className="flex gap-6">
+            <Link href="/play" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Play</Link>
+            <Link href="/host/create" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Create</Link>
+            <Link href="/join" className="text-sm text-gray-500 hover:text-[#ccff00] transition-colors">Join</Link>
+          </div>
+        </div>
+      </footer>
+
+      {/* Mobile Nav */}
+      <MobileNav />
     </div>
   );
 }

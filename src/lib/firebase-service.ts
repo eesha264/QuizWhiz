@@ -27,7 +27,8 @@ import {
   increment,
 } from "firebase/firestore";
 
-import { db, auth } from "@/firebase";
+import { db, auth, functions } from "@/firebase";
+import { httpsCallable } from "firebase/functions";
 import { signInAnonymously } from "firebase/auth";
 import { fetchQuestionsFromAPI } from "./trivia-service";
 import { Quiz, Question, Participant, LeaderboardEntry, QuestionResult } from "@/types/quiz";
@@ -858,36 +859,40 @@ export const restartGame = async (quizId: string): Promise<void> => {
 };
 
 /**
- * Submit an answer for a participant
+ * Submit an answer for a participant (Server-Side Scoring)
+ * Calls Firebase Cloud Function for secure score calculation
  * @param quizId - The quiz ID
  * @param participantId - The participant ID
- * @param answer - The answer object
+ * @param questionIndex - The question index
+ * @param selectedOptionIndex - The selected answer index
+ * @returns Promise resolving to the result (isCorrect, pointsEarned)
  */
 export const submitAnswer = async (
   quizId: string,
   participantId: string,
   questionIndex: number,
-  selectedOptionIndex: number,
-  pointsEarned: number
-): Promise<void> => {
+  selectedOptionIndex: number
+): Promise<{ isCorrect: boolean; pointsEarned: number }> => {
   try {
-    console.log("📝 Submitting answer:", { quizId, participantId, questionIndex });
+    console.log("📝 Submitting answer (secure):", { quizId, participantId, questionIndex });
 
-    const participantRef = doc(
-      db,
-      "quizzes",
+    const submitAnswerSecure = httpsCallable<
+      { quizId: string; participantId: string; questionIndex: number; selectedOptionIndex: number },
+      { success: boolean; isCorrect: boolean; pointsEarned: number }
+    >(functions, 'submitAnswerSecure');
+
+    const result = await submitAnswerSecure({
       quizId,
-      "participants",
-      participantId
-    );
-
-    // Atomic update using dot notation for the Map
-    await updateDoc(participantRef, {
-      [`answers.${questionIndex}`]: selectedOptionIndex,
-      totalScore: increment(pointsEarned)
+      participantId,
+      questionIndex,
+      selectedOptionIndex
     });
 
-    console.log("✅ Answer submitted (atomic)");
+    console.log("✅ Answer submitted (secure):", result.data);
+    return {
+      isCorrect: result.data.isCorrect,
+      pointsEarned: result.data.pointsEarned
+    };
   } catch (error) {
     console.error("❌ Error submitting answer:", error);
     throw error;

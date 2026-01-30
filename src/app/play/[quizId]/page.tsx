@@ -194,23 +194,22 @@ export default function PlayPage() {
     setSelectedAnswer(option);
     setIsAnswerSubmitted(true);
 
-    const actualCorrectOption = currentQuestion.options[currentQuestion.correctOptionIndex];
-    const correct = option === actualCorrectOption;
-
-    if (correct) playCorrect();
-    else playWrong();
-
     try {
-      const pointsEarned = correct ? currentQuestion.points : 0;
-      await submitAnswer(
+      // Server-side scoring - Cloud Function calculates correctness
+      const result = await submitAnswer(
         quizId,
         currentParticipant.id,
         quiz?.currentQuestionIndex ?? 0,
-        index,
-        pointsEarned
+        index
       );
+
+      // Play sound based on server response
+      if (result.isCorrect) playCorrect();
+      else playWrong();
     } catch (error) {
       console.error(error);
+      // Fallback: play wrong sound on error
+      playWrong();
     }
   };
 
