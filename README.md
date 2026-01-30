@@ -10,17 +10,19 @@ Organizing live quizzes for university clubs, tech events, or large gatherings o
 
 *   **AI-Powered Quiz Generation**: Generate quiz questions instantly using Google's Gemini models via Genkit.
 *   **Real-Time Synchronization**: Game state (lobby, question, results) updates instantly on all client devices using Firestore listeners.
+*   **Server-Side Scoring**: Secure scoring via Firebase Cloud Functions prevents client-side cheating.
+*   **Premium Cyberpunk UI**: A stunning, modern interface with neon accents, sharp edges, and parallax effects.
 *   **Admin Dashboard**: Comprehensive interface for creating quizzes, managing content, and controlling live game flow.
 *   **Live Session Management**: Admins can start questions, reveal answers, and advance rounds manually to pace the event.
-*   **Automated Scoring**: Points are calculated server-side based on answer correctness and response speed.
 *   **Dynamic Leaderboard**: Real-time ranking of top performers updated after every round.
 *   **Secure Access**: Route protection and role-based access control for administrative functions.
 
 ## Technical Stack
 
 *   **Frontend**: Next.js 16 (App Router), React 19, TypeScript
-*   **Styling**: Tailwind CSS, Radix UI
+*   **Styling**: Tailwind CSS, Radix UI (Cyberpunk Design System)
 *   **AI & Backend**: Google Genkit, Gemini API, Firebase Firestore (NoSQL Database)
+*   **Server Functions**: Firebase Cloud Functions (Node.js 20)
 *   **Authentication**: Firebase Authentication (Google OAuth)
 *   **Infrastructure**: Vercel (Frontend Hosting), Google Cloud Platform (Backend Services)
 

@@ -17,10 +17,13 @@
 - [x] **Host Controls**: Start quiz, advance to next question, end quiz.
 - [x] **Participant View**: Responsive mobile-first UI for answering questions.
 - [x] **Feedback**: Immediate visual feedback on answer selection (though correctness is revealed after round).
+- [x] **Cyberpunk Design System**: Full UI overhaul with neon accents, sharp edges, and glitch effects.
+- [x] **Premium Landing Page**: Parallax scrolling hero with scroll-triggered animations.
 
 ### Technical & Infrastructure
 - [x] **Authentication**: Google OAuth for Admins.
 - [x] **Anonymous Access**: Frictionless entry for participants (no login required).
+- [x] **Server-Side Scoring**: Firebase Cloud Functions for secure score calculation.
 - [x] **Deployment Config**: Vercel (Frontend) and Firebase (Backend) configuration files ready.
 - [x] **Documentation**: Comprehensive Architecture and Deployment guides.
 
@@ -41,7 +44,7 @@
 
 ## 3. Planned / Future Improvements
 
-- [ ] **Server-Side Scoring**: Move scoring logic to Firebase Cloud Functions to prevent client-side cheating.
+- [x] **Server-Side Scoring**: Move scoring logic to Firebase Cloud Functions to prevent client-side cheating. ✅ IMPLEMENTED
 - [ ] **Edit Quiz**: Ability to modify questions in an existing quiz (currently can only Create or Delete).
 - [ ] **Rich Media**: Support for images or videos in questions.
 - [ ] **Persistent Participant Profiles**: Allow users to create accounts to track their history and stats across multiple quizzes.
