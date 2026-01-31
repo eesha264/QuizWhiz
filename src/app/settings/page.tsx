@@ -1,0 +1,82 @@
+'use client';
+
+import { Settings, User, Shield, Monitor, Volume2, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+
+export default function SettingsPage() {
+    return (
+        <div className="min-h-screen bg-[#050505] text-white p-6 pb-24">
+            <div className="max-w-md mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-[#ccff00]/10 border border-[#ccff00]/20">
+                        <Settings className="w-6 h-6 text-[#ccff00]" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-black uppercase tracking-tighter">System Config</h1>
+                        <p className="text-xs text-gray-500 font-mono">USER_ID: GUEST_01</p>
+                    </div>
+                </div>
+
+                {/* Section: Profile */}
+                <div className="space-y-4">
+                    <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-gray-500 mb-2">UserProfile</h2>
+                    <div className="bg-[#0a0a0a] border border-[#222] p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-[#222] flex items-center justify-center">
+                                    <User className="w-5 h-5 text-gray-400" />
+                                </div>
+                                <div>
+                                    <p className="font-bold uppercase text-sm">Guest User</p>
+                                    <p className="text-xs text-gray-600">Sync Disabled</p>
+                                </div>
+                            </div>
+                            <Button variant="outline" size="sm" className="h-8 text-[10px] uppercase border-[#333] hover:border-[#ccff00] hover:text-[#ccff00]">
+                                Edit
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: Preferences */}
+                <div className="space-y-4">
+                    <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-gray-500 mb-2">Preferences</h2>
+                    <div className="bg-[#0a0a0a] border border-[#222] p-4 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Volume2 className="w-4 h-4 text-gray-400" />
+                                <Label htmlFor="sfx" className="uppercase text-xs font-bold">Sound Effects</Label>
+                            </div>
+                            <Switch id="sfx" defaultChecked />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Monitor className="w-4 h-4 text-gray-400" />
+                                <Label htmlFor="haptics" className="uppercase text-xs font-bold">Haptic Feedback</Label>
+                            </div>
+                            <Switch id="haptics" defaultChecked />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section: System */}
+                <div className="space-y-4">
+                    <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-gray-500 mb-2">System</h2>
+                    <div className="bg-[#0a0a0a] border border-[#222] p-4 space-y-2">
+                        <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-400 hover:bg-red-500/10 uppercase text-xs font-bold tracking-wider h-12">
+                            <LogOut className="w-4 h-4 mr-3" />
+                            Disconnect Session
+                        </Button>
+                        <div className="pt-2 border-t border-[#222] text-center">
+                            <p className="text-[10px] text-gray-700 font-mono">VERSION: 2.1.0_PROD</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

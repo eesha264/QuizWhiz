@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Settings, Trophy } from 'lucide-react';
+import { Home, Settings, Trophy, Shield } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
@@ -31,7 +31,7 @@ export default function MobileNav() {
                 <Link href="/admin" className="flex flex-col items-center gap-1 group">
                     <div className="relative flex items-center justify-center p-2 transition-transform group-active:scale-90">
                         {pathname.startsWith('/admin') && <div className="absolute inset-0 bg-[#ccff00]/10 skew-x-12"></div>}
-                        <Settings
+                        <Shield
                             className={clsx("w-7 h-7 transition-colors", pathname.startsWith('/admin') ? "text-[#ccff00]" : "text-gray-500 group-hover:text-white")}
                         />
                     </div>
@@ -40,6 +40,21 @@ export default function MobileNav() {
                         pathname.startsWith('/admin') ? "text-[#ccff00]" : "text-gray-500 group-hover:text-white"
                     )}>
                         Admin
+                    </span>
+                </Link>
+
+                <Link href="/settings" className="flex flex-col items-center gap-1 group">
+                    <div className="relative flex items-center justify-center p-2 transition-transform group-active:scale-90">
+                        {pathname.startsWith('/settings') && <div className="absolute inset-0 bg-[#ccff00]/10 skew-x-12"></div>}
+                        <Settings
+                            className={clsx("w-7 h-7 transition-colors", pathname.startsWith('/settings') ? "text-[#ccff00]" : "text-gray-500 group-hover:text-white")}
+                        />
+                    </div>
+                    <span className={clsx(
+                        "text-[10px] font-bold tracking-widest uppercase transition-colors",
+                        pathname.startsWith('/settings') ? "text-[#ccff00]" : "text-gray-500 group-hover:text-white"
+                    )}>
+                        Config
                     </span>
                 </Link>
 
